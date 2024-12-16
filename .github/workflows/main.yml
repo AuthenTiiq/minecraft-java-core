@@ -1,36 +1,41 @@
-name: Build and Compile Project
+name: Build and Publish Release
 
 on:
   push:
     branches:
-      - master    # ou la branche de votre choix
+      - master
   release:
     types:
-      - created   # Se déclenche lors de la création d'un release
+      - created
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Utilisation d'une machine Ubuntu pour l'exécution
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2  # Récupère le code source du dépôt
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3  # Configure Node.js pour l'environnement GitHub Actions
+        uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Remplacez par la version de Node.js que vous utilisez
+          node-version: '16'
 
       - name: Install dependencies
-        run: |
-          npm install  # Installe les dépendances du projet
+        run: npm install  # Installe les dépendances
 
-      - name: Build project
-        run: |
-          npm run build  # Compile le projet
+      - name: Build the project
+        run: npm run build  # Compile le projet
 
-      - name: Upload compiled files as artifacts
-        uses: actions/upload-artifact@v3  # Télécharge les fichiers compilés comme artefacts
+      - name: Archive compiled files
+        run: |
+          mkdir release
+          cp -r build/* release/  # Copie les fichiers compilés dans un répertoire 'release'
+          tar -czf release.tar.gz -C release .  # Crée un fichier tar.gz contenant les fichiers compilés
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: compiled-files
-          path: build/  # Le répertoire contenant les fichiers compilés
+          files: release.tar.gz  # Le fichier tar.gz que vous avez créé
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
