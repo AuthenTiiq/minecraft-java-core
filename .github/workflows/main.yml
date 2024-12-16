@@ -3,53 +3,63 @@ name: Build and Compile Project
 on:
   push:
     branches:
-      - master    # Cette action se déclenche lors d'un push sur la branche master
+      - master
   pull_request:
     branches:
-      - master    # Cette action se déclenche lors d'un pull request sur la branche master
+      - master
   release:
     types:
-      - created   # Cette action se déclenche lors de la création d'une release (vous pouvez personnaliser cela)
+      - created
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Utilise une machine virtuelle Ubuntu pour l'exécution
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2  # Récupère le code du dépôt
+        uses: actions/checkout@v2
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3  # Configure Node.js pour l'environnement GitHub Actions
+        uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Spécifiez la version de Node.js que vous utilisez
+          node-version: '16'
 
       - name: Install dependencies
         run: |
-          npm install  # Installe les dépendances du projet
+          npm install
 
       - name: Build project
         run: |
-          npm run build  # Exécute le script de build pour compiler le projet TypeScript
+          npm run build
 
-      - name: Archive compiled files as tar.gz
+      - name: Verify presence of package.json
         run: |
-          # Crée un répertoire pour les fichiers compilés, puis crée une archive tar.gz
+          ls -alh  # Liste les fichiers pour vérifier la présence de package.json à la racine
+
+      - name: Create release directory and add files
+        run: |
           mkdir release
-          cp -r build/* release/  # Copie les fichiers compilés dans le dossier release
+          cp -r build/* release/
           cp package.json release/  # Copier package.json dans le dossier release
+          
+      - name: Verify files in release directory
+        run: |
+          ls -alh release  # Vérifie que package.json et les fichiers build sont bien dans le dossier release
+
+      - name: Create tar.gz archive
+        run: |
           tar -czf release.tar.gz -C release .  # Crée l'archive tar.gz
 
       - name: Upload compiled files as artifacts
-        uses: actions/upload-artifact@v3  # Télécharge les fichiers compilés comme artefacts
+        uses: actions/upload-artifact@v3
         with:
           name: compiled-files
-          path: release.tar.gz  # Spécifie le fichier tar.gz créé à télécharger comme artefact
+          path: release.tar.gz  # Télécharge l'archive tar.gz comme artefact
 
       - name: Create GitHub Release
-        if: github.event_name == 'release'  # Assure que cela ne se déclenche que lors de la création d'un release
-        uses: softprops/action-gh-release@v1  # Utilise l'action pour créer une release GitHub
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
         with:
-          files: release.tar.gz  # Ajoute l'archive tar.gz à la release
+          files: release.tar.gz
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Le token d'authentification GitHub
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
