@@ -37,6 +37,7 @@ jobs:
           # Crée un répertoire pour les fichiers compilés, puis crée une archive tar.gz
           mkdir release
           cp -r build/* release/  # Copie les fichiers compilés dans le dossier release
+          cp package.json release/  # Copier package.json dans le dossier release
           tar -czf release.tar.gz -C release .  # Crée l'archive tar.gz
 
       - name: Upload compiled files as artifacts
