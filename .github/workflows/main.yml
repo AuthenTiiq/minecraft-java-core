@@ -16,9 +16,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Étape pour récupérer le code source de votre projet
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Étape pour récupérer le module 'minecraft-java-core' (si nécessaire)
+      - name: Clone minecraft-java-core repository
+        run: |
+          git clone https://github.com/AuthenTiiq/minecraft-java-core.git
+          cd minecraft-java-core
+          npm install  # Installer les dépendances de 'minecraft-java-core'
+          npm run build  # Compiler 'minecraft-java-core'
+
+      # Étape pour installer les dépendances de votre projet principal
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -28,34 +38,27 @@ jobs:
         run: |
           npm install
 
+      # Étape pour compiler votre projet
       - name: Build project
         run: |
           npm run build
 
-      - name: Verify presence of package.json
-        run: |
-          ls -alh  # Liste les fichiers pour vérifier la présence de package.json à la racine
-
-      - name: Create release directory and add files
+      # Étape pour créer l'archive tar.gz avec les fichiers compilés
+      - name: Archive compiled files as tar.gz
         run: |
           mkdir release
-          cp -r build/* release/
-          cp package.json release/  # Copier package.json dans le dossier release
-          
-      - name: Verify files in release directory
-        run: |
-          ls -alh release  # Vérifie que package.json et les fichiers build sont bien dans le dossier release
+          cp -r build/* release/  # Copier les fichiers compilés dans le dossier 'release'
+          cp package.json release/  # Copier le 'package.json' dans le dossier 'release'
+          tar -czf release.tar.gz -C release .  # Créer l'archive tar.gz
 
-      - name: Create tar.gz archive
-        run: |
-          tar -czf release.tar.gz -C release .  # Crée l'archive tar.gz
-
+      # Étape pour télécharger l'archive tar.gz comme artefact
       - name: Upload compiled files as artifacts
         uses: actions/upload-artifact@v3
         with:
           name: compiled-files
-          path: release.tar.gz  # Télécharge l'archive tar.gz comme artefact
+          path: release.tar.gz
 
+      # Étape pour créer la release GitHub
       - name: Create GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v1
