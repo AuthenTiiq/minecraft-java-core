@@ -3,7 +3,7 @@ name: Build and Publish Release
 on:
   push:
     branches:
-      - master  # Assurez-vous que le push sur 'master' ou la branche de votre choix déclenche ce workflow
+      - master  # ou la branche que vous souhaitez
 
 jobs:
   build:
@@ -32,17 +32,23 @@ jobs:
 
       - name: Create GitHub tag
         run: |
-          TAG_NAME="v$(date +'%Y.%m.%d.%H%M%S')"  # Génère un tag basé sur la date/heure
+          TAG_NAME="v$(date +'%Y.%m.%d.%H%M%S')"  # Génère un tag avec la date et l'heure
           git tag $TAG_NAME
-          git push origin $TAG_NAME  # Pousse le tag sur GitHub
+          git push origin $TAG_NAME  # Pousse le tag vers GitHub
 
-      # Ajout d'un délai pour s'assurer que GitHub a bien pris en compte le tag
+      - name: Verify Tag Creation
+        run: |
+          echo "Verifying the tag exists..."
+          git fetch --tags  # Assurez-vous que les tags sont bien téléchargés
+          git tag -l  # Affiche les tags pour s'assurer que le tag est bien présent
+
+      # Ajout d'une pause pour s'assurer que GitHub ait le temps d'enregistrer le tag
       - name: Wait for tag to be registered
-        run: sleep 10  # Attendre 10 secondes
+        run: sleep 10  # Attente de 10 secondes
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: release.tar.gz  # Le fichier tar.gz que vous voulez associer à la release
+          files: release.tar.gz  # Fichier que vous souhaitez ajouter à la release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Utilisation d'un token pour créer la release
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Utilisation du token pour authentification
