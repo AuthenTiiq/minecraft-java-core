@@ -1,0 +1,39 @@
+name: Build and Compile Project
+
+on:
+  push:
+    branches:
+      - master    # Cette action se déclenche lors d'un push sur la branche master
+  pull_request:
+    branches:
+      - master    # Cette action se déclenche lors d'un pull request sur la branche master
+  release:
+    types:
+      - created   # Cette action se déclenche lors de la création d'un release (vous pouvez personnaliser cela)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Utilise une machine virtuelle Ubuntu pour l'exécution
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2  # Récupère le code du dépôt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3  # Configure Node.js pour l'environnement GitHub Actions
+        with:
+          node-version: '16'  # Spécifiez la version de Node.js que vous utilisez
+
+      - name: Install dependencies
+        run: |
+          npm install  # Installe les dépendances du projet
+
+      - name: Build project
+        run: |
+          npm run build  # Exécute le script de build pour compiler le projet TypeScript
+
+      - name: Upload compiled files as artifacts
+        uses: actions/upload-artifact@v3  # Télécharge les fichiers compilés comme artefacts
+        with:
+          name: compiled-files
+          path: build/  # Le répertoire contenant les fichiers compilés (ajustez en fonction du projet)
