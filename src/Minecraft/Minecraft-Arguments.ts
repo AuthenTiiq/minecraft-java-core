@@ -130,6 +130,11 @@ export default class MinecraftArguments {
         libraries = libraries.filter((library: any, index: any, self: any) => index === self.findIndex((res: any) => res.name === library.name));
 
         for (let lib of libraries) {
+            // Exclusion de ASM 9.6
+            if (lib.name && lib.name.includes('org.objectweb.asm:asm') && lib.name.includes(':9.6')) {
+                continue; // Ignore cette bibliothèque (ASM 9.6)
+            }
+            
             if (lib.loader && lib.name.startsWith('org.apache.logging.log4j:log4j-slf4j2-impl')) continue;
 
             if (lib.natives) {
