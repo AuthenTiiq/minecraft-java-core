@@ -9,7 +9,7 @@ on:
       - master    # Cette action se déclenche lors d'un pull request sur la branche master
   release:
     types:
-      - created   # Cette action se déclenche lors de la création d'un release (vous pouvez personnaliser cela)
+      - created   # Cette action se déclenche lors de la création d'une release (vous pouvez personnaliser cela)
 
 jobs:
   build:
@@ -32,8 +32,23 @@ jobs:
         run: |
           npm run build  # Exécute le script de build pour compiler le projet TypeScript
 
+      - name: Archive compiled files as tar.gz
+        run: |
+          # Crée un répertoire pour les fichiers compilés, puis crée une archive tar.gz
+          mkdir release
+          cp -r build/* release/  # Copie les fichiers compilés dans le dossier release
+          tar -czf release.tar.gz -C release .  # Crée l'archive tar.gz
+
       - name: Upload compiled files as artifacts
         uses: actions/upload-artifact@v3  # Télécharge les fichiers compilés comme artefacts
         with:
           name: compiled-files
-          path: build/  # Le répertoire contenant les fichiers compilés (ajustez en fonction du projet)
+          path: release.tar.gz  # Spécifie le fichier tar.gz créé à télécharger comme artefact
+
+      - name: Create GitHub Release
+        if: github.event_name == 'release'  # Assure que cela ne se déclenche que lors de la création d'un release
+        uses: softprops/action-gh-release@v1  # Utilise l'action pour créer une release GitHub
+        with:
+          files: release.tar.gz  # Ajoute l'archive tar.gz à la release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Le token d'authentification GitHub
