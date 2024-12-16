@@ -2,60 +2,43 @@ name: Build and Publish Release
 
 on:
   push:
-    branches:
-      - master  # ou la branche que vous utilisez
+    tags:
+      - 'v*'  # Déclenche l'action sur tous les tags commençant par 'v'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Étape 1 : Checkout du code
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Étape 2 : Installer Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '16'
 
-      # Étape 3 : Installer les dépendances
       - name: Install dependencies
         run: npm install
 
-      # Étape 4 : Compiler le projet
       - name: Build the project
         run: npm run build
 
-      # Étape 5 : Créer un fichier d'archive
       - name: Archive compiled files
         run: |
           mkdir release
           cp -r build/* release/
           tar -czf release.tar.gz -C release .
 
-      # Étape 6 : Créer un tag avec la date/heure actuelle
-      - name: Create GitHub tag
+      - name: Push tag (if not already pushed)
         run: |
-          TAG_NAME="v$(date +'%Y.%m.%d.%H%M%S')"  # Crée un tag basé sur la date/heure
+          TAG_NAME="v$(date +'%Y.%m.%d.%H%M%S')"
           git tag $TAG_NAME
-          git push origin $TAG_NAME  # Push du tag vers GitHub
+          git push origin $TAG_NAME
 
-      # Étape 7 : Attendre quelques secondes pour s'assurer que GitHub a bien pris en compte le tag
-      - name: Wait for GitHub to register the tag
-        run: sleep 10  # Attente de 10 secondes
-
-      # Étape 8 : Vérifier la présence du tag
-      - name: Verify tag on GitHub
-        run: |
-          git fetch --tags  # Récupérer les tags
-          git tag -l  # Lister tous les tags pour vérifier que le tag est bien là
-
-      # Étape 9 : Créer un release GitHub avec le tag et le fichier d'archive
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: release.tar.gz  # Le fichier que vous souhaitez ajouter à la release
+          files: release.tar.gz  # Fichier que vous souhaitez ajouter à la release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Le token d'authentification GitHub
