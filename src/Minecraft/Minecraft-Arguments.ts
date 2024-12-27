@@ -122,17 +122,22 @@ export default class MinecraftArguments {
     }
 
     async GetClassPath(json: any, loaderJson: any) {
-        let librariesList: string[] = []
-        let classPath: string[] = []
+        let librariesList: string[] = [];
+        let classPath: string[] = [];
         let libraries: any = json.libraries;
-
+    
         if (loaderJson?.libraries) libraries = loaderJson.libraries.concat(libraries);
         libraries = libraries.filter((library: any, index: any, self: any) => index === self.findIndex((res: any) => res.name === library.name));
-
+    
         for (let lib of libraries) {
-            
+            // Ignorer ASM 9.6
+            if (lib.name === 'org.ow2.asm:asm:9.6') {
+                console.log("Bibliothèque ASM 9.6 ignorée :", lib.name);
+                continue;
+            }
+    
             if (lib.loader && lib.name.startsWith('org.apache.logging.log4j:log4j-slf4j2-impl')) continue;
-
+    
             if (lib.natives) {
                 let native = lib.natives[MojangLib[process.platform]];
                 if (!native) native = lib.natives[process.platform];
@@ -142,7 +147,7 @@ export default class MinecraftArguments {
                     if (lib.rules[0].os.name !== MojangLib[process.platform]) continue;
                 }
             }
-
+    
             let path = getPathLibraries(lib.name);
             if (lib.loader) {
                 librariesList.push(`${lib.loader}/libraries/${path.path}/${path.name}`);
@@ -150,7 +155,7 @@ export default class MinecraftArguments {
                 librariesList.push(`${this.options.path}/libraries/${path.path}/${path.name}`);
             }
         }
-
+    
         if (loaderJson?.isOldForge) {
             librariesList.push(loaderJson?.jarPath);
         } else if (this.options.mcp) {
@@ -158,8 +163,7 @@ export default class MinecraftArguments {
         } else {
             librariesList.push(`${this.options.path}/versions/${json.id}/${json.id}.jar`);
         }
-
-
+    
         classPath = librariesList.filter((path: string) => {
             let lib = path.split('/').pop();
             if (lib && !classPath.includes(lib)) {
@@ -168,13 +172,13 @@ export default class MinecraftArguments {
             }
             return false;
         });
-
+    
         return {
             classpath: [
                 `-cp`,
                 classPath.join(process.platform === 'win32' ? ';' : ':'),
             ],
             mainClass: loaderJson ? loaderJson.mainClass : json.mainClass
-        }
-    }
+        };
+    }    
 }
