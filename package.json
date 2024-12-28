@@ -10,8 +10,8 @@
     },
     "description": "A library starting minecraft game NW.js and Electron.js",
     "scripts": {
-        "dev": "rimraf . && tsc -w",
-        "build": "rimraf . && tsc",
+        "dev": "rimraf ./build && tsc -w",
+        "build": "rimraf ./build && tsc",
         "prepublishOnly": "npm i && npm run build"
     },
     "files": [
